@@ -7,6 +7,9 @@ use rustc_span::{
     symbol::Ident as HirIdent,
     BytePos as HirBytePos, Span as HirSpan, Symbol as HirSymbol,
 };
+
+use rml::util::{get_attr, is_spec};
+
 use type_extract::extract_types;
 use Ctor;
 use Def;
@@ -72,6 +75,14 @@ impl<'hir> FromHir<'hir, &'hir hir::Mod<'hir>> for Mod {
             items: value
                 .item_ids
                 .iter()
+                .filter(|id| {
+                    let did = id.owner_id.to_def_id();
+                    let is_spec_fn = is_spec(tcx, did);
+                    let is_spec_const =
+                        get_attr(tcx.get_attrs_unchecked(did), &["rml", "spec_part_div_ref"])
+                            .is_some();
+                    !(is_spec_fn || is_spec_const)
+                })
                 .map(|id| tcx.hir().item(*id).hir_into(tcx))
                 .collect(),
         }
