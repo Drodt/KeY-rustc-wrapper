@@ -60,16 +60,16 @@ pub enum Ty {
         args: Vec<GenericTyArgKind>,
     },
     CoroutineClosure {
-        def_id: DefId,
-        args: Vec<GenericTyArgKind>,
+        /* def_id: DefId,
+        args: Vec<GenericTyArgKind>, */
     },
     Coroutine {
-        def_id: DefId,
-        args: Vec<GenericTyArgKind>,
+        /*  def_id: DefId,
+        args: Vec<GenericTyArgKind>, */
     },
     CoroutineWitness {
-        def_id: DefId,
-        args: Vec<GenericTyArgKind>,
+        /*  def_id: DefId,
+        args: Vec<GenericTyArgKind>, */
     },
     Never,
     Tuple {
@@ -90,7 +90,7 @@ pub enum Ty {
         placeholder: Placeholder<BoundTy>,
     },
     Infer {
-        infer: InferTy,
+        //infer: InferTy,
     },
     Error,
 }
@@ -142,9 +142,9 @@ pub enum VariantDiscr {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Const {
     Param(ParamConst),
-    Infer(InferConst),
+    Infer, //(InferConst),
     Bound(DebruijnIndex, BoundVar),
-    Placeholder(Placeholder<BoundVar>),
+    Placeholder, //(Placeholder<BoundVar>),
     Unevaluated(UnevaluatedConst),
     Value(Ty, ValTree),
     Error,
@@ -299,7 +299,7 @@ pub struct AliasTy {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum GenericTyArgKind {
-    //Lifetime(Region)
+    Lifetime, //(Region)
     Type(Ty),
     Const(Const),
 }

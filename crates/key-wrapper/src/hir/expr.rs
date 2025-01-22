@@ -118,7 +118,7 @@ pub enum ExprKind {
     Become {
         expr: Expr,
     },
-    //InlineAsm(InlineAsm),
+    InlineAsm, //(InlineAsm),
     OffsetOf {
         ty: HirTy,
         idents: Vec<Ident>,
@@ -151,6 +151,7 @@ pub enum UnOp {
     Deref,
     Not,
     Neg,
+    PtrMetadata,
 }
 
 pub type Lit = Spanned<LitKind>;
@@ -295,6 +296,8 @@ pub enum BinOpKind {
     Ne,
     Ge,
     Gt,
+    Cmp,
+    Offset,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

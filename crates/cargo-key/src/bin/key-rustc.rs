@@ -7,6 +7,9 @@ extern crate rustc_interface;
 extern crate rustc_session;
 extern crate termcolor;
 
+#[macro_use]
+extern crate log;
+
 use std::{env, panic, panic::PanicHookInfo, process::Command};
 
 use cargo_key::{Args, WrapperArgs};
@@ -18,7 +21,7 @@ use rustc_interface::interface::try_print_query_stack;
 use rustc_session::{config::ErrorOutputType, EarlyDiagCtxt};
 use termcolor::{ColorChoice, StandardStream};
 
-const BUG_REPORT_URL: &str = "https://github.com/Drodt/TODO/issues/new";
+const BUG_REPORT_URL: &str = "https://github.com/Drodt/KeY-rustc-wrapper/issues/new";
 
 lazy_static::lazy_static! {
     static ref ICE_HOOK: Box<dyn Fn(&panic::PanicHookInfo<'_>) + Sync + Send + 'static> = {
@@ -69,6 +72,9 @@ fn main() {
     setup_plugin();
 }
 
+struct DefaultCallbacks;
+impl rustc_driver::Callbacks for DefaultCallbacks {}
+
 fn setup_plugin() {
     let mut args = env::args().collect::<Vec<_>>();
 
@@ -89,15 +95,34 @@ fn setup_plugin() {
     let sysroot = sysroot_path();
     args.push(format!("--sysroot={}", sysroot));
 
-    args.push("-Cpanic=abort".to_owned());
-    args.push("-Coverflow-checks=off".to_owned());
-    args.push("-Zcrate-attr=feature(register_tool)".to_owned());
-    args.push("-Zcrate-attr=feature(rustc_attrs)".to_owned());
-    args.push("-Zcrate-attr=feature(unsized_fn_params)".to_owned());
+    let normal_rustc = args.iter().any(|arg| arg.starts_with("--print"));
+    let primary_package = std::env::var("CARGO_PRIMARY_PACKAGE").is_ok();
+    let has_contracts = args
+        .iter()
+        .any(|arg| arg == "rml_contracts" || arg.contains("rml_contracts="));
 
-    let mut callbacks = Wrapper::new(key_args.to_options());
+    // Did the user ask to compile this crate? Either they explicitly invoked
+    // `rml-rustc` or this is a primary package.
+    let user_asked_for = !is_wrapper || primary_package;
 
-    RunCompiler::new(&args, &mut callbacks).run().unwrap();
+    if normal_rustc || !(user_asked_for || has_contracts) {
+        RunCompiler::new(&args, &mut DefaultCallbacks {})
+            .run()
+            .unwrap();
+    } else {
+        args.push("-Cpanic=abort".to_owned());
+        args.push("-Coverflow-checks=off".to_owned());
+        args.push("-Zcrate-attr=feature(register_tool)".to_owned());
+        args.push("-Zcrate-attr=register_tool(rml)".to_owned());
+        args.push("-Zcrate-attr=feature(rustc_attrs)".to_owned());
+        args.push("-Zcrate-attr=feature(unsized_fn_params)".to_owned());
+        args.extend(["--cfg", "rml"].into_iter().map(str::to_owned));
+        //eprintln!("args={:?}", args);
+
+        let mut callbacks = Wrapper::new(key_args.to_options());
+
+        RunCompiler::new(&args, &mut callbacks).run().unwrap();
+    }
 }
 
 fn sysroot_path() -> String {

@@ -231,10 +231,14 @@ pub enum DefKind {
         mutability: bool,
         nested: bool,
     },
-    Ctor(Ctor),
+    Ctor {
+        ctor: Ctor,
+    },
     AssocFn,
     AssocConst,
-    Macro(MacroKind),
+    Macro {
+        kind: MacroKind,
+    },
     ExternCrate,
     Use,
     ForeignMod,
@@ -307,8 +311,11 @@ pub enum CtorOf {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum MacroKind {
+    /// A bang macro `foo!()`.
     Bang,
+    /// An attribute macro `#[foo]`.
     Attr,
+    /// A derive macro `#[derive(Foo)]`
     Derive,
 }
 

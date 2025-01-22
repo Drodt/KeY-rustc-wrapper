@@ -33,23 +33,25 @@ impl<'tcx> Collector<'tcx> {
 
 impl<'a, 'tcx> Visit<'a> for Collector<'tcx> {
     fn visit_item_kind(&mut self, t: &'a super::ItemKind) {
-        if let ItemKind::Fn {
-            sig: _,
-            generics: _,
-            body_id,
-            body: _,
-        } = t
-        {
-            self.last_body_id = Some(body_id.clone());
+        match t {
+            ItemKind::Fn {
+                sig: _,
+                generics: _,
+                body_id,
+                body: _,
+            } => {
+                self.last_body_id = Some(body_id.clone());
+            }
+            ItemKind::Const { body_id, .. } => self.last_body_id = Some(body_id.clone()),
+            _ => (),
         }
         visit_item_kind(self, t)
     }
 
-    fn visit_body(&mut self, _: &'a super::Body) {
-        let id = self
-            .last_body_id
-            .take()
-            .expect("expected body id to be set");
+    fn visit_body(&mut self, body: &'a super::Body) {
+        let Some(id) = self.last_body_id.take() else {
+            panic!("Encountered body {body:?} but no id was set");
+        };
 
         let owner: OwnerId = id.hir_id.owner.into();
 

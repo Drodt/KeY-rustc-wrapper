@@ -56,18 +56,10 @@ pub fn visit_item_kind<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a ItemKind) {
     match x {
         ItemKind::ExternCrate { symbol: _ } => {}
         ItemKind::Use { .. } => {}
-        ItemKind::Static {
-            ty: _,
-            r#const: _,
-            body,
-        } => {
+        ItemKind::Static { body, .. } => {
             v.visit_body(body);
         }
-        ItemKind::Const {
-            ty: _,
-            generics: _,
-            body,
-        } => {
+        ItemKind::Const { body, .. } => {
             v.visit_body(body);
         }
         ItemKind::Fn {
@@ -86,6 +78,9 @@ pub fn visit_item_kind<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a ItemKind) {
         ItemKind::Trait { .. } => {}
         ItemKind::TraitAlias { .. } => {}
         ItemKind::Impl { r#impl: i } => v.visit_impl(i),
+        ItemKind::Macro { .. } => {}
+        ItemKind::ForeignMod => {}
+        ItemKind::GlobalAsm => {}
     }
 }
 

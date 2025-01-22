@@ -27,6 +27,8 @@ pub enum ItemKind {
     Const {
         ty: HirTy,
         generics: Generics,
+        #[serde(skip)]
+        body_id: rustc_hir::BodyId,
         body: Body,
     },
     Fn {
@@ -76,7 +78,16 @@ pub enum ItemKind {
     Impl {
         r#impl: Impl,
     },
+    Macro {
+        def: MacroDef,
+        kind: MacroKind,
+    },
+    ForeignMod,
+    GlobalAsm,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct MacroDef {}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Body {
@@ -244,6 +255,7 @@ pub enum HirTyKind {
         ty: HirTy,
         pat: Pat,
     },
+    OpaqueDef,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

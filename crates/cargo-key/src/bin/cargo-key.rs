@@ -23,9 +23,10 @@ fn main() {
     cmd.arg(cargo_cmd)
         .args(args.rust_flags)
         .env("RUSTC_WRAPPER", rml_rustc_path)
+        .env("CARGO_RML", "1")
         .env("CARGO_INCREMENTAL", "0")
         .env("RUST_LOG", "debug")
-        .env("RUST_BACKTRACE", "1");
+        .env("RUST_BACKTRACE", "full");
 
     cmd.env("KEY_ARGS", serde_json::to_string(&args.key).unwrap());
 
