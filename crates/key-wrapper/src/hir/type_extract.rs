@@ -1,11 +1,12 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use rustc_hir::BodyId;
 use rustc_middle::ty::TyCtxt;
 
 use super::{
     conversion::HirInto,
-    visit::{visit_item_kind, Visit},
+    pat::PatKind,
+    visit::{visit_body, visit_expr, visit_item_kind, visit_pat, Visit},
     HirId, ItemKind, Mod, OwnerId, Ty,
 };
 
@@ -19,6 +20,7 @@ struct Collector<'tcx> {
     map: HashMap<HirId, Ty>,
     last_body_id: Option<BodyId>,
     tcx: TyCtxt<'tcx>,
+    hir_ids: HashSet<HirId>,
 }
 
 impl<'tcx> Collector<'tcx> {
@@ -26,6 +28,7 @@ impl<'tcx> Collector<'tcx> {
         Self {
             tcx,
             map: Default::default(),
+            hir_ids: Default::default(),
             last_body_id: None,
         }
     }
@@ -34,12 +37,7 @@ impl<'tcx> Collector<'tcx> {
 impl<'a, 'tcx> Visit<'a> for Collector<'tcx> {
     fn visit_item_kind(&mut self, t: &'a super::ItemKind) {
         match t {
-            ItemKind::Fn {
-                sig: _,
-                generics: _,
-                body_id,
-                body: _,
-            } => {
+            ItemKind::Fn { body_id, .. } => {
                 self.last_body_id = Some(body_id.clone());
             }
             ItemKind::Const { body_id, .. } => self.last_body_id = Some(body_id.clone()),
@@ -53,6 +51,8 @@ impl<'a, 'tcx> Visit<'a> for Collector<'tcx> {
             panic!("Encountered body {body:?} but no id was set");
         };
 
+        visit_body(self, body);
+
         let owner: OwnerId = id.hir_id.owner.into();
 
         let res = self.tcx.typeck_body(id);
@@ -62,8 +62,27 @@ impl<'a, 'tcx> Visit<'a> for Collector<'tcx> {
                 owner: owner.clone(),
                 local_id: lid.into(),
             };
+            if !self.hir_ids.contains(&hir_id) {
+                continue;
+            }
             let ty: Ty = ty.hir_into(self.tcx);
             self.map.insert(hir_id, ty);
         }
+    }
+
+    fn visit_expr(&mut self, t: &'a super::expr::Expr) {
+        self.hir_ids.insert(t.hir_id.clone());
+        visit_expr(self, t);
+    }
+
+    fn visit_pat(&mut self, t: &'a super::pat::Pat) {
+        match t.kind.as_ref() {
+            PatKind::Binding { hir_id, .. } => {
+                self.hir_ids.insert(hir_id.clone());
+            }
+            _ => {}
+        }
+
+        visit_pat(self, t);
     }
 }
