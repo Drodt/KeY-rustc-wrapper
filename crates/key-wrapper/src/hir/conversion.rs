@@ -1809,7 +1809,28 @@ impl From<hir::ImplicitSelfKind> for ImplicitSelfKind {
 impl<'hir> FromHir<'hir, &'hir hir::Block<'hir>> for Block {
     fn from_hir(value: &'hir hir::Block<'hir>, tcx: TyCtxt<'hir>) -> Self {
         Block {
-            stmts: value.stmts.hir_into(tcx),
+            stmts: value
+                .stmts
+                .iter()
+                .filter(|s| {
+                    // Filter out statements that are actually spec closures.
+                    // Of form `let _ = #[attrs] |params| {..};`
+                    if let hir::StmtKind::Let(hir::LetStmt {
+                        init:
+                            Some(hir::Expr {
+                                kind: hir::ExprKind::Closure(closure),
+                                ..
+                            }),
+                        ..
+                    }) = s.kind
+                    {
+                        !is_spec(tcx, closure.def_id.to_def_id())
+                    } else {
+                        true
+                    }
+                })
+                .map(|s| s.hir_into(tcx))
+                .collect(),
             expr: value.expr.map(|e| e.hir_into(tcx)),
             hir_id: value.hir_id.into(),
             rules: value.rules.into(),
