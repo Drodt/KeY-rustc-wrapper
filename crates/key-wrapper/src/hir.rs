@@ -89,8 +89,15 @@ pub struct Generics {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct WherePredicate {
+    pub hir_id: HirId,
+    pub span: Span,
+    pub kind: WherePredicateKind,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "serde_tag")]
-pub enum WherePredicate {
+pub enum WherePredicateKind {
     Bound(WhereBoundPredicate),
     Region(WhereRegionPredicate),
     Eq(WhereEqPredicate),
@@ -98,8 +105,6 @@ pub enum WherePredicate {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct WhereBoundPredicate {
-    pub hir_id: HirId,
-    pub span: Span,
     pub origin: PredicateOrigin,
     pub bound_generic_params: Vec<GenericParam>,
     pub bounded_ty: HirTy,
@@ -116,7 +121,6 @@ pub enum PredicateOrigin {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct WhereRegionPredicate {
-    pub span: Span,
     pub in_where_clause: bool,
     pub lifetime: Lifetime,
     pub bounds: GenericBounds,
@@ -126,7 +130,6 @@ pub type GenericBounds = Vec<GenericBound>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct WhereEqPredicate {
-    pub span: Span,
     pub lhs_ty: HirTy,
     pub rhs_ty: HirTy,
 }
@@ -423,7 +426,6 @@ pub enum GenericParamKind {
     Const {
         ty: HirTy,
         default: Option<ConstArg>,
-        is_host_effect: bool,
         synthetic: bool,
     },
 }
@@ -459,7 +461,9 @@ pub enum PreciseCapturingArg {
 pub struct Lifetime {
     pub hir_id: HirId,
     pub ident: Ident,
-    pub res: LifetimeName,
+    pub kind: LifetimeKind,
+    pub source: LifetimeSource,
+    pub syntax: LifetimeSyntax,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -470,12 +474,35 @@ pub struct PreciseCapturingNonLifetimeArg {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub enum LifetimeName {
+pub enum LifetimeKind {
     Param(LocalDefId),
     ImplicitObjectLifetimeDefault,
     Error,
     Infer,
     Static,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum LifetimeSource {
+    Reference,
+    Path { angle_brackets: AngleBrackets },
+    OutlivesBound,
+    PreciseCapturing,
+    Other,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum AngleBrackets {
+    Missing,
+    Empty,
+    Full,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum LifetimeSyntax {
+    Hidden,
+    Anonymous,
+    Named,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -488,13 +515,13 @@ pub enum Term {
 pub struct ConstArg {
     pub hir_id: HirId,
     pub kind: ConstArgKind,
-    pub is_desugared_from_effects: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum ConstArgKind {
     Path(QPath),
     Anon(AnonConst),
+    Infer(Span),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -526,6 +553,7 @@ pub enum LangItem {
     Copy,
     Clone,
     CloneFn,
+    UseCloned,
     Sync,
     DiscriminantKind,
     Discriminant,
@@ -533,22 +561,13 @@ pub enum LangItem {
     Metadata,
     DynMetadata,
     Freeze,
+    UnsafeUnpin,
     FnPtrTrait,
     FnPtrAddr,
     Drop,
     Destruct,
     AsyncDrop,
-    AsyncDestruct,
     AsyncDropInPlace,
-    SurfaceAsyncDropInPlace,
-    AsyncDropSurfaceDropInPlace,
-    AsyncDropSlice,
-    AsyncDropChain,
-    AsyncDropNoop,
-    AsyncDropDeferredDropInPlace,
-    AsyncDropFuse,
-    AsyncDropDefer,
-    AsyncDropEither,
     CoerceUnsized,
     DispatchFromDyn,
     TransmuteOpts,
@@ -578,12 +597,15 @@ pub enum LangItem {
     Index,
     IndexMut,
     UnsafeCell,
+    UnsafePinned,
     VaList,
     Deref,
     DerefMut,
     DerefPure,
     DerefTarget,
     Receiver,
+    ReceiverTarget,
+    LegacyReceiver,
     Fn,
     FnMut,
     FnOnce,
@@ -641,8 +663,12 @@ pub enum LangItem {
     PanicAsyncFnResumedPanic,
     PanicAsyncGenFnResumedPanic,
     PanicGenFnNonePanic,
+    PanicNullPointerDereference,
+    PanicCoroutineResumedDrop,
+    PanicAsyncFnResumedDrop,
+    PanicAsyncGenFnResumedDrop,
+    PanicGenFnNoneDrop,
     BeginPanic,
-    FormatAlignment,
     FormatArgument,
     FormatArguments,
     FormatCount,
@@ -650,7 +676,6 @@ pub enum LangItem {
     FormatUnsafeArg,
     ExchangeMalloc,
     DropInPlace,
-    FallbackSurfaceDrop,
     AllocLayout,
     Start,
     EhPersonality,
@@ -660,8 +685,8 @@ pub enum LangItem {
     PtrUnique,
     PhantomData,
     ManuallyDrop,
+    BikeshedGuaranteedNoDrop,
     MaybeUninit,
-    AlignOffset,
     Termination,
     Try,
     Tuple,
@@ -671,6 +696,7 @@ pub enum LangItem {
     TryTraitBranch,
     TryTraitFromYeet,
     PointerLike,
+    CoercePointeeValidated,
     ConstParamTy,
     UnsizedConstParamTy,
     Poll,
@@ -703,15 +729,21 @@ pub enum LangItem {
     Range,
     RangeToInclusive,
     RangeTo,
+    RangeMax,
+    RangeMin,
+    RangeSub,
+    RangeFromCopy,
+    RangeCopy,
+    RangeInclusiveCopy,
     String,
     CStr,
-    EffectsRuntime,
-    EffectsNoRuntime,
-    EffectsMaybe,
-    EffectsIntersection,
-    EffectsIntersectionOutput,
-    EffectsCompat,
-    EffectsTyCompat,
+    ContractBuildCheckEnsures,
+    ContractCheckRequires,
+    DefaultTrait4,
+    DefaultTrait3,
+    DefaultTrait2,
+    DefaultTrait1,
+    ContractCheckEnsures,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

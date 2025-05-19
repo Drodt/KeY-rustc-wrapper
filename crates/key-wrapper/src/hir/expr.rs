@@ -84,7 +84,7 @@ pub enum ExprKind {
         span: Span,
     },
     AssignOp {
-        op: BinOp,
+        op: AssignOp,
         left: Expr,
         right: Expr,
     },
@@ -126,17 +126,28 @@ pub enum ExprKind {
     Struct {
         path: QPath,
         fields: Vec<ExprField>,
-        rest: Option<Expr>,
+        tail: StructTailExpr,
     },
     Repeat {
         expr: Expr,
-        len: ArrayLen,
+        len: ConstArg,
     },
     Yield {
         expr: Expr,
         src: YieldSource,
     },
+    Use {
+        expr: Expr,
+        span: Span,
+    },
     Err,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum StructTailExpr {
+    None,
+    Base { base: Box<Expr> },
+    DefaultFields { span: Span },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -298,6 +309,22 @@ pub enum BinOpKind {
     Gt,
     Cmp,
     Offset,
+}
+
+pub type AssignOp = Spanned<AssignOpKind>;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum AssignOpKind {
+    AddAssign,
+    SubAssign,
+    MulAssign,
+    DivAssign,
+    RemAssign,
+    BitXorAssign,
+    BitAndAssign,
+    BitOrAssign,
+    ShlAssign,
+    ShrAssign,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

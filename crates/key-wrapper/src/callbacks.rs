@@ -7,7 +7,8 @@ use rml::{
     suppress_borrowck, Options as RmlOpts,
 };
 use rustc_driver::{Callbacks, Compilation};
-use rustc_interface::{interface::Compiler, Config, Queries};
+use rustc_interface::{interface::Compiler, Config};
+use rustc_middle::ty::TyCtxt;
 use serde::Serialize;
 
 use crate::{
@@ -87,41 +88,38 @@ impl Callbacks for Wrapper {
     fn after_expansion<'tcx>(
         &mut self,
         compiler: &rustc_interface::interface::Compiler,
-        queries: &'tcx Queries<'tcx>,
+        tcx: TyCtxt<'tcx>,
     ) -> Compilation {
         compiler.sess.dcx().abort_if_errors();
 
-        queries.global_ctxt().unwrap().enter(|tcx| {
-            let mut rcx = RmlCtxt::new(
-                tcx,
-                RmlOpts {
-                    should_output: false,
-                    output_file: None,
-                    in_cargo: true,
-                    print_expanded: false,
-                    print_specs_debug: false,
-                    pretty_print: false,
-                },
-            );
-            rcx.validate();
-            unsafe { store_rcx(rcx) };
-        });
+        let mut rcx = RmlCtxt::new(
+            tcx,
+            RmlOpts {
+                should_output: false,
+                output_file: None,
+                in_cargo: true,
+                print_expanded: false,
+                print_specs_debug: false,
+                pretty_print: false,
+            },
+        );
+        rcx.validate();
+        unsafe { store_rcx(rcx) };
 
         compiler.sess.dcx().abort_if_errors();
 
         Compilation::Continue
     }
 
-    fn after_analysis<'tcx>(&mut self, _: &Compiler, q: &'tcx Queries<'tcx>) -> Compilation {
-        q.global_ctxt().unwrap().enter(|tcx| {
-            eprintln!("Starting conversion");
-            let rcx = unsafe { retrieve_rcx(tcx) };
-            let specs = rcx.get_specs();
-            //eprintln!("specs={specs:?}");
-            self.specs = Some(specs);
-            self.converted = Some(convert(tcx));
-            self.print();
-        });
+    fn after_analysis<'tcx>(&mut self, _: &Compiler, tcx: TyCtxt<'tcx>) -> Compilation {
+        eprintln!("Starting conversion");
+        let rcx = unsafe { retrieve_rcx(tcx) };
+        let specs = rcx.get_specs();
+        //eprintln!("specs={specs:?}");
+        self.specs = Some(specs);
+        self.converted = Some(convert(tcx));
+        self.print();
+
         Compilation::Continue
     }
 }

@@ -2,7 +2,6 @@ use super::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Item {
-    pub ident: Ident,
     pub owner_id: OwnerId,
     pub kind: ItemKind,
     pub span: Span,
@@ -14,24 +13,28 @@ pub struct Item {
 pub enum ItemKind {
     ExternCrate {
         symbol: Option<Symbol>,
+        ident: Ident,
     },
     Use {
         path: UsePath,
         use_kind: UseKind,
     },
     Static {
+        ident: Ident,
         ty: HirTy,
         r#const: bool,
         body: Body,
     },
     Const {
         ty: HirTy,
+        ident: Ident,
         generics: Generics,
         #[serde(skip)]
         body_id: rustc_hir::BodyId,
         body: Body,
     },
     Fn {
+        ident: Ident,
         sig: FnSig,
         generics: Generics,
         #[serde(skip)]
@@ -40,6 +43,7 @@ pub enum ItemKind {
     },
     //Macro(MacroDef, MacroKind),
     Mod {
+        ident: Ident,
         r#mod: Mod,
     },
     /* ForeignMod {
@@ -48,30 +52,36 @@ pub enum ItemKind {
     }, */
     //GlobalAsm(InlineAsm),
     TyAlias {
+        ident: Ident,
         ty: HirTy,
         generics: Generics,
     },
     //OpaqueTy(OpaqueTy),
     Enum {
+        ident: Ident,
         def: EnumDef,
         generics: Generics,
     },
     Struct {
+        ident: Ident,
         data: VariantData,
         generics: Generics,
     },
     Union {
+        ident: Ident,
         data: VariantData,
         generics: Generics,
     },
     Trait {
-        field1: bool,
-        field2: bool,
+        is_auto: bool,
+        is_safe: bool,
+        ident: Ident,
         generics: Generics,
         bounds: GenericBounds,
         refs: Vec<TraitItemRef>,
     },
     TraitAlias {
+        ident: Ident,
         generics: Generics,
         bounds: GenericBounds,
     },
@@ -79,6 +89,7 @@ pub enum ItemKind {
         r#impl: Impl,
     },
     Macro {
+        ident: Ident,
         def: MacroDef,
         kind: MacroKind,
     },
@@ -218,7 +229,7 @@ pub enum HirTyKind {
     },
     Array {
         ty: HirTy,
-        len: ArrayLen,
+        len: ConstArg,
     },
     Ptr {
         ty: MutHirTy,
@@ -253,9 +264,23 @@ pub enum HirTyKind {
     Err,
     Pat {
         ty: HirTy,
-        pat: Pat,
+        pat: TyPat,
     },
     OpaqueDef,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct TyPat {
+    pub hir_id: HirId,
+    pub kind: TyPatKind,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum TyPatKind {
+    Range(ConstArg, ConstArg),
+    Or(Vec<TyPat>),
+    Err,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -279,12 +304,6 @@ pub enum InferDelegationKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub enum ArrayLen {
-    Infer(InferArg),
-    Body(ConstArg),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct MutHirTy {
     pub ty: HirTy,
     pub mutbl: bool,
@@ -296,7 +315,7 @@ pub struct BareFnHirTy {
     //pub abi: Abi,
     pub generic_params: Vec<GenericParam>,
     pub decl: FnDecl,
-    pub param_names: Vec<Ident>,
+    pub param_idents: Vec<Option<Ident>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -327,7 +346,7 @@ pub type UsePath = Path<Vec<Res>>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum UseKind {
-    Single,
+    Single(Ident),
     Glob,
     ListStem,
 }

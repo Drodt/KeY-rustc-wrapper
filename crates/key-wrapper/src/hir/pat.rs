@@ -12,6 +12,7 @@ pub struct Pat {
 #[serde(tag = "serde_tag")]
 pub enum PatKind {
     Wild,
+    Missing,
     Binding {
         mode: BindingMode,
         hir_id: HirId,
@@ -53,14 +54,21 @@ pub enum PatKind {
         expr: Expr,
     },
     Range {
-        lhs: Option<Expr>,
-        rhs: Option<Expr>,
+        lhs: Option<PatExpr>,
+        rhs: Option<PatExpr>,
         inclusive: bool,
     },
     Slice {
         start: Vec<Pat>,
         mid: Option<Pat>,
         rest: Vec<Pat>,
+    },
+    Expr {
+        expr: PatExpr,
+    },
+    Guard {
+        pat: Pat,
+        guard: Expr,
     },
     Err,
 }
@@ -89,3 +97,17 @@ pub struct PatField {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DotDotPos(pub u32);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PatExpr {
+    pub hir_id: HirId,
+    pub span: Span,
+    pub kind: PatExprKind,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum PatExprKind {
+    Lit { lit: Lit, negated: bool },
+    ConstBlock(ConstBlock),
+    Path(QPath),
+}

@@ -146,9 +146,15 @@ pub enum Const {
     Bound(DebruijnIndex, BoundVar),
     Placeholder, //(Placeholder<BoundVar>),
     Unevaluated(UnevaluatedConst),
-    Value(Ty, ValTree),
+    Value(Value),
     Error,
     Expr(ConstExpr),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Value {
+    pub ty: Ty,
+    pub valtree: ValTree,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -213,11 +219,8 @@ pub struct ScalarInt {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Pattern {
-    Range {
-        start: Option<Const>,
-        end: Option<Const>,
-        include_end: bool,
-    },
+    Range { start: Const, end: Const },
+    Or { pats: Vec<Pattern> },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -241,9 +244,9 @@ pub enum BoundTyKind {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum BoundRegionKind {
-    BrAnon,
-    BrNamed(DefId, Symbol),
-    BrEnv,
+    Anon,
+    Named(DefId, Symbol),
+    ClosureEnv,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -288,7 +291,7 @@ pub enum AliasTyKind {
     Projection,
     Inherent,
     Opaque,
-    Weak,
+    Free,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

@@ -33,4 +33,5 @@ pub enum LocalSource {
     AsyncFn,
     AwaitDesugar,
     AssignDesugar { span: Span },
+    Contract,
 }

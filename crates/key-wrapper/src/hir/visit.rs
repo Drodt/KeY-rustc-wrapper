@@ -49,7 +49,8 @@ create_visitor_traits! {
   stmt: Stmt,
   let_stmt: LetStmt,
   param: Param,
-  pat: Pat
+  pat: Pat,
+  pat_expr: PatExpr
 }
 
 pub fn visit_mod<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a Mod) {
@@ -64,7 +65,10 @@ pub fn visit_item<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a Item) {
 
 pub fn visit_item_kind<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a ItemKind) {
     match x {
-        ItemKind::ExternCrate { symbol: _ } => {}
+        ItemKind::ExternCrate {
+            symbol: _,
+            ident: _,
+        } => {}
         ItemKind::Use { .. } => {}
         ItemKind::Static { body, .. } => {
             v.visit_body(body);
@@ -73,6 +77,7 @@ pub fn visit_item_kind<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a ItemKind) {
             v.visit_body(body);
         }
         ItemKind::Fn {
+            ident: _,
             sig: _,
             generics: _,
             body_id: _,
@@ -80,7 +85,7 @@ pub fn visit_item_kind<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a ItemKind) {
         } => {
             v.visit_body(body);
         }
-        ItemKind::Mod { r#mod: m } => v.visit_mod(m),
+        ItemKind::Mod { r#mod: m, .. } => v.visit_mod(m),
         ItemKind::TyAlias { .. } => {}
         ItemKind::Enum { .. } => {}
         ItemKind::Struct { .. } => {}
@@ -137,10 +142,10 @@ pub fn visit_pat<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a Pat) {
         PatKind::Lit { expr } => v.visit_expr(expr),
         PatKind::Range { lhs, rhs, .. } => {
             if let Some(e) = lhs {
-                v.visit_expr(e);
+                v.visit_pat_expr(e);
             }
             if let Some(e) = rhs {
-                v.visit_expr(e);
+                v.visit_pat_expr(e);
             }
         }
         PatKind::Slice { start, mid, rest } => {
@@ -155,6 +160,12 @@ pub fn visit_pat<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a Pat) {
             }
         }
         PatKind::Err => {}
+        PatKind::Missing => todo!(),
+        PatKind::Expr { expr } => v.visit_pat_expr(expr),
+        PatKind::Guard { pat, guard } => {
+            v.visit_pat(pat);
+            v.visit_expr(guard);
+        }
     }
 }
 
@@ -258,12 +269,14 @@ pub fn visit_expr<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a Expr) {
         ExprKind::Become { expr } => v.visit_expr(expr),
         ExprKind::InlineAsm => {}
         ExprKind::OffsetOf { .. } => {}
-        ExprKind::Struct { fields, rest, .. } => {
+        ExprKind::Struct {
+            fields, tail: rest, ..
+        } => {
             for f in fields {
                 v.visit_expr_field(f);
             }
-            if let Some(e) = rest {
-                v.visit_expr(e);
+            if let StructTailExpr::Base { base } = rest {
+                v.visit_expr(base);
             }
         }
         ExprKind::Repeat { expr, .. } => {
@@ -273,6 +286,7 @@ pub fn visit_expr<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a Expr) {
             v.visit_expr(expr);
         }
         ExprKind::Err => {}
+        ExprKind::Use { .. } => todo!(),
     }
 }
 
@@ -323,5 +337,13 @@ pub fn visit_let_stmt<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a LetStmt) {
     v.visit_pat(&x.pat);
     if let Some(e) = &x.init {
         v.visit_expr(e);
+    }
+}
+
+pub fn visit_pat_expr<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a PatExpr) {
+    match &x.kind {
+        PatExprKind::Lit { .. } => {}
+        PatExprKind::ConstBlock(cb) => v.visit_body(&cb.body),
+        PatExprKind::Path(..) => {}
     }
 }
