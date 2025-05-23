@@ -106,8 +106,9 @@ pub struct PatExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum PatExprKind {
     Lit { lit: Lit, negated: bool },
-    ConstBlock(ConstBlock),
-    Path(QPath),
+    ConstBlock { block: ConstBlock },
+    Path { path: QPath },
 }

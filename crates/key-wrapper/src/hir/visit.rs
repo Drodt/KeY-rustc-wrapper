@@ -343,7 +343,7 @@ pub fn visit_let_stmt<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a LetStmt) {
 pub fn visit_pat_expr<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a PatExpr) {
     match &x.kind {
         PatExprKind::Lit { .. } => {}
-        PatExprKind::ConstBlock(cb) => v.visit_body(&cb.body),
-        PatExprKind::Path(..) => {}
+        PatExprKind::ConstBlock { block: cb } => v.visit_body(&cb.body),
+        PatExprKind::Path { .. } => {}
     }
 }

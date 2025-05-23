@@ -3,16 +3,16 @@ use std::{collections::HashMap, num::NonZero, ops::Deref};
 use rustc_hir as hir;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::{
+    BytePos as HirBytePos, Span as HirSpan, Symbol as HirSymbol,
     def_id::{DefIndex as HirDefIndex, LocalDefId as HirLocalDefId},
     symbol::Ident as HirIdent,
-    BytePos as HirBytePos, Span as HirSpan, Symbol as HirSymbol,
 };
 
 use rml::util::{get_attr, is_spec};
 
-use type_extract::extract_types;
 use Ctor;
 use Def;
+use type_extract::extract_types;
 
 use super::*;
 
@@ -1493,10 +1493,12 @@ impl<'tcx> FromHir<'tcx, &'tcx hir::PatExprKind<'tcx>> for PatExprKind {
                 lit: (*lit).into(),
                 negated: *negated,
             },
-            rustc_hir::PatExprKind::ConstBlock(const_block) => {
-                Self::ConstBlock(const_block.hir_into(tcx))
-            }
-            rustc_hir::PatExprKind::Path(qpath) => Self::Path(qpath.hir_into(tcx)),
+            rustc_hir::PatExprKind::ConstBlock(const_block) => Self::ConstBlock {
+                block: const_block.hir_into(tcx),
+            },
+            rustc_hir::PatExprKind::Path(qpath) => Self::Path {
+                path: qpath.hir_into(tcx),
+            },
         }
     }
 }
@@ -2368,7 +2370,7 @@ impl From<rustc_middle::ty::VariantDiscr> for VariantDiscr {
 
 impl<'tcx> FromHir<'tcx, &rustc_middle::ty::Pattern<'tcx>> for Pattern {
     fn from_hir(value: &rustc_middle::ty::Pattern<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
-        match value.0 .0 {
+        match value.0.0 {
             rustc_middle::ty::PatternKind::Range { start, end } => Self::Range {
                 start: start.hir_into(tcx),
                 end: end.hir_into(tcx),
