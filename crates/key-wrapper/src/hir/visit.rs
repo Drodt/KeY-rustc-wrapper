@@ -118,7 +118,7 @@ pub fn visit_pat<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a Pat) {
                 v.visit_pat(p);
             }
         }
-        PatKind::Struct { .. } => todo!(),
+        PatKind::Struct { .. } => {}
         PatKind::TupleStruct { pats, .. } => {
             for p in pats {
                 v.visit_pat(p);

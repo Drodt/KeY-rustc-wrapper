@@ -14,10 +14,10 @@ use std::{env, panic, panic::PanicHookInfo, process::Command};
 use cargo_key::{Args, WrapperArgs};
 use clap::*;
 use key_wrapper::callbacks::*;
-use rustc_driver::{run_compiler, DEFAULT_LOCALE_RESOURCES};
+use rustc_driver::{DEFAULT_LOCALE_RESOURCES, run_compiler};
 use rustc_errors::emitter::HumanEmitter;
 use rustc_interface::interface::try_print_query_stack;
-use rustc_session::{config::ErrorOutputType, EarlyDiagCtxt};
+use rustc_session::{EarlyDiagCtxt, config::ErrorOutputType};
 use termcolor::{ColorChoice, StandardStream};
 
 const BUG_REPORT_URL: &str = "https://github.com/Drodt/KeY-rustc-wrapper/issues/new";
@@ -101,7 +101,7 @@ fn setup_plugin() {
         .any(|arg| arg == "rml_contracts" || arg.contains("rml_contracts="));
 
     // Did the user ask to compile this crate? Either they explicitly invoked
-    // `rml-rustc` or this is a primary package.
+    // `key-rustc` or this is a primary package.
     let user_asked_for = !is_wrapper || primary_package;
 
     if normal_rustc || !(user_asked_for || has_contracts) {
