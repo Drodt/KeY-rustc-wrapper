@@ -140,15 +140,27 @@ pub enum VariantDiscr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum Const {
-    Param(ParamConst),
+    Param {
+        pc: ParamConst,
+    },
     Infer, //(InferConst),
-    Bound(DebruijnIndex, BoundVar),
+    Bound {
+        idx: DebruijnIndex,
+        bound_var: BoundVar,
+    },
     Placeholder, //(Placeholder<BoundVar>),
-    Unevaluated(UnevaluatedConst),
-    Value(Value),
+    Unevaluated {
+        uc: UnevaluatedConst,
+    },
+    Value {
+        value: Value,
+    },
     Error,
-    Expr(ConstExpr),
+    Expr {
+        expr: ConstExpr,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -206,9 +218,10 @@ pub struct UnevaluatedConst {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum ValTree {
-    Leaf(ScalarInt),
-    Branch(Vec<ValTree>),
+    Leaf { scalar_int: ScalarInt },
+    Branch { branches: Vec<ValTree> },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

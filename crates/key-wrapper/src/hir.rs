@@ -518,16 +518,19 @@ pub struct ConstArg {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum ConstArgKind {
-    Path(QPath),
-    Anon(AnonConst),
-    Infer(Span),
+    Path { path: QPath },
+    Anon { ac: AnonConst },
+    Infer { span: Span },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AnonConst {
     pub hir_id: HirId,
     pub def_id: LocalDefId,
+    #[serde(skip)]
+    body_id: rustc_hir::BodyId,
     pub body: Body,
     pub span: Span,
 }

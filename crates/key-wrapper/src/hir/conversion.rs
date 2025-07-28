@@ -805,9 +805,15 @@ impl<'hir, A> FromHir<'hir, &'hir hir::ConstArg<'hir, A>> for ConstArg {
 impl<'hir, A> FromHir<'hir, &'hir hir::ConstArgKind<'hir, A>> for ConstArgKind {
     fn from_hir(value: &'hir hir::ConstArgKind<'hir, A>, tcx: TyCtxt<'hir>) -> Self {
         match value {
-            hir::ConstArgKind::Path(qpath) => Self::Path(qpath.hir_into(tcx)),
-            hir::ConstArgKind::Anon(anon_const) => Self::Anon((*anon_const).hir_into(tcx)),
-            rustc_hir::ConstArgKind::Infer(span, _) => Self::Infer((*span).into()),
+            hir::ConstArgKind::Path(qpath) => Self::Path {
+                path: qpath.hir_into(tcx),
+            },
+            hir::ConstArgKind::Anon(anon_const) => Self::Anon {
+                ac: (*anon_const).hir_into(tcx),
+            },
+            rustc_hir::ConstArgKind::Infer(span, _) => Self::Infer {
+                span: (*span).into(),
+            },
         }
     }
 }
@@ -1378,6 +1384,7 @@ impl<'hir> FromHir<'hir, &'hir hir::AnonConst> for AnonConst {
         AnonConst {
             hir_id: value.hir_id.into(),
             def_id: value.def_id.into(),
+            body_id: value.body,
             body: tcx.hir_body(value.body).hir_into(tcx),
             span: value.span.into(),
         }
@@ -2612,18 +2619,23 @@ impl<'tcx> FromHir<'tcx, rustc_middle::ty::GenericArgKind<'tcx>> for GenericTyAr
 impl<'tcx> FromHir<'tcx, &rustc_middle::ty::Const<'tcx>> for Const {
     fn from_hir(value: &rustc_middle::ty::Const<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
         match value.kind() {
-            rustc_type_ir::ConstKind::Param(p) => Self::Param(p.into()),
+            rustc_type_ir::ConstKind::Param(p) => Self::Param { pc: p.into() },
             rustc_type_ir::ConstKind::Infer(_) => Self::Infer,
-            rustc_type_ir::ConstKind::Bound(debruijn_index, bv) => {
-                Self::Bound((&debruijn_index).into(), bv.into())
-            }
+            rustc_type_ir::ConstKind::Bound(debruijn_index, bv) => Self::Bound {
+                idx: (&debruijn_index).into(),
+                bound_var: bv.into(),
+            },
             rustc_type_ir::ConstKind::Placeholder(_) => Self::Placeholder,
-            rustc_type_ir::ConstKind::Unevaluated(unevaluated_const) => {
-                Self::Unevaluated(unevaluated_const.hir_into(tcx))
-            }
-            rustc_type_ir::ConstKind::Value(value) => Self::Value(value.hir_into(tcx)),
+            rustc_type_ir::ConstKind::Unevaluated(unevaluated_const) => Self::Unevaluated {
+                uc: unevaluated_const.hir_into(tcx),
+            },
+            rustc_type_ir::ConstKind::Value(value) => Self::Value {
+                value: value.hir_into(tcx),
+            },
             rustc_type_ir::ConstKind::Error(_) => Self::Error,
-            rustc_type_ir::ConstKind::Expr(e) => Self::Expr((&e).hir_into(tcx)),
+            rustc_type_ir::ConstKind::Expr(e) => Self::Expr {
+                expr: (&e).hir_into(tcx),
+            },
         }
     }
 }
@@ -2659,10 +2671,12 @@ impl From<&rustc_middle::ty::ValTree<'_>> for ValTree {
     fn from(value: &rustc_middle::ty::ValTree<'_>) -> Self {
         let kind: &rustc_middle::ty::ValTreeKind<'_> = value.deref();
         match kind {
-            rustc_middle::ty::ValTreeKind::Leaf(scalar_int) => Self::Leaf(scalar_int.into()),
-            rustc_middle::ty::ValTreeKind::Branch(trees) => {
-                Self::Branch(trees.into_iter().map(Into::into).collect())
-            }
+            rustc_middle::ty::ValTreeKind::Leaf(scalar_int) => Self::Leaf {
+                scalar_int: scalar_int.into(),
+            },
+            rustc_middle::ty::ValTreeKind::Branch(trees) => Self::Branch {
+                branches: trees.into_iter().map(Into::into).collect(),
+            },
         }
     }
 }

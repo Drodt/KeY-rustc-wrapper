@@ -3,11 +3,13 @@ use std::collections::{HashMap, HashSet};
 use rustc_hir::BodyId;
 use rustc_middle::ty::TyCtxt;
 
+use crate::hir::visit::visit_anon_const;
+
 use super::{
+    HirId, ItemKind, Mod, OwnerId, Ty,
     conversion::HirInto,
     pat::PatKind,
-    visit::{visit_body, visit_expr, visit_item_kind, visit_pat, Visit},
-    HirId, ItemKind, Mod, OwnerId, Ty,
+    visit::{Visit, visit_body, visit_expr, visit_item_kind, visit_pat},
 };
 
 pub fn extract_types(m: &Mod, tcx: TyCtxt) -> HashMap<HirId, Ty> {
@@ -44,6 +46,11 @@ impl<'a, 'tcx> Visit<'a> for Collector<'tcx> {
             _ => (),
         }
         visit_item_kind(self, t)
+    }
+
+    fn visit_anon_const(&mut self, t: &'a super::AnonConst) {
+        self.last_body_id = Some(t.body_id.clone());
+        visit_anon_const(self, t);
     }
 
     fn visit_body(&mut self, body: &'a super::Body) {
