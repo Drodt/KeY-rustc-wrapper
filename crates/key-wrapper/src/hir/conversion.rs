@@ -2085,8 +2085,8 @@ impl From<&hir::Destination> for Destination {
         Destination {
             label: value.label.map(|l| l.into()),
             target_id: match value.target_id {
-                Ok(id) => Ok(id.into()),
-                Err(e) => Err(e.into()),
+                Ok(id) => id.into(),
+                Err(e) => panic!("All labels must be resolvable; encountered {e} @ {value:?}"),
             },
         }
     }
@@ -2096,16 +2096,6 @@ impl From<rustc_ast::Label> for Label {
     fn from(value: rustc_ast::Label) -> Self {
         Label {
             ident: value.ident.into(),
-        }
-    }
-}
-
-impl From<hir::LoopIdError> for LoopIdError {
-    fn from(value: hir::LoopIdError) -> Self {
-        match value {
-            hir::LoopIdError::OutsideLoopScope => Self::OutsideLoopScope,
-            hir::LoopIdError::UnlabeledCfInWhileCondition => Self::UnlabeledCfInWhileCondition,
-            hir::LoopIdError::UnresolvedLabel => Self::UnresolvedLabel,
         }
     }
 }

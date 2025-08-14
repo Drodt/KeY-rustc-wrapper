@@ -330,19 +330,12 @@ pub enum AssignOpKind {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Destination {
     pub label: Option<Label>,
-    pub target_id: Result<HirId, LoopIdError>,
+    pub target_id: HirId,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Label {
     pub ident: Ident,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub enum LoopIdError {
-    OutsideLoopScope,
-    UnlabeledCfInWhileCondition,
-    UnresolvedLabel,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
