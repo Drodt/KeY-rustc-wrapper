@@ -184,7 +184,7 @@ pub enum LitKind {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum StrStyle {
     Cooked,
-    Raw(u8),
+    Raw { depth: u8 },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -197,7 +197,7 @@ pub enum LitIntType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum LitFloatType {
-    Suffixed(FloatTy),
+    Suffixed { ty: FloatTy },
     Unsuffixed,
 }
 
@@ -231,7 +231,7 @@ pub enum MatchSource {
     Normal,
     Postfix,
     ForLoopDesugar,
-    TryDesugar(HirId),
+    TryDesugar { hir_id: HirId },
     AwaitDesugar,
     FormatArgs,
 }

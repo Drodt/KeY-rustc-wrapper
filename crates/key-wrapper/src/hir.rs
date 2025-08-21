@@ -98,9 +98,9 @@ pub struct WherePredicate {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "serde_tag")]
 pub enum WherePredicateKind {
-    Bound(WhereBoundPredicate),
-    Region(WhereRegionPredicate),
-    Eq(WhereEqPredicate),
+    Bound { pred: WhereBoundPredicate },
+    Region { pred: WhereRegionPredicate },
+    Eq { pred: WhereEqPredicate },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -181,12 +181,16 @@ pub enum Res<Id = HirId> {
         forbid_generic: bool,
         is_trait_impl: bool,
     },
-    SelfCtor(DefId),
+    SelfCtor {
+        def_id: DefId,
+    },
     Local {
         id: Id,
     },
     ToolMod,
-    NonMacroAttr(NonMacroAttrKind),
+    NonMacroAttr {
+        kind: NonMacroAttrKind,
+    },
     Err,
 }
 
@@ -261,7 +265,7 @@ pub enum DefKind {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "serde_tag")]
 pub enum NonMacroAttrKind {
-    Builtin(Symbol),
+    Builtin { symbol: Symbol },
     Tool,
     DeriveHelper,
     DeriveHelperCompat,
@@ -341,10 +345,10 @@ pub struct GenericArgs {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum GenericArg {
-    Lifetime(Lifetime),
-    Type(HirTy),
-    Const(ConstArg),
-    Infer(InferArg),
+    Lifetime { lifetime: Lifetime },
+    Type { ty: HirTy },
+    Const { c: ConstArg },
+    Infer { infer: InferArg },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -377,9 +381,16 @@ pub enum AssocItemConstraintKind {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum GenericBound {
-    Trait(PolyTraitRef),
-    Outlives(Lifetime),
-    Use(Vec<PreciseCapturingArg>, Span),
+    Trait {
+        trait_ref: PolyTraitRef,
+    },
+    Outlives {
+        lifetime: Lifetime,
+    },
+    Use {
+        args: Vec<PreciseCapturingArg>,
+        span: Span,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -409,7 +420,7 @@ pub enum GenericParamSource {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum ParamName {
-    Plain(Ident),
+    Plain { ident: Ident },
     Fresh,
     Error,
 }
@@ -453,8 +464,8 @@ pub struct TraitRef {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum PreciseCapturingArg {
-    Lifetime(Lifetime),
-    Param(PreciseCapturingNonLifetimeArg),
+    Lifetime { lifetime: Lifetime },
+    Param { arg: PreciseCapturingNonLifetimeArg },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -475,7 +486,7 @@ pub struct PreciseCapturingNonLifetimeArg {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum LifetimeKind {
-    Param(LocalDefId),
+    Param { id: LocalDefId },
     ImplicitObjectLifetimeDefault,
     Error,
     Infer,
@@ -507,8 +518,8 @@ pub enum LifetimeSyntax {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Term {
-    Ty(HirTy),
-    Const(ConstArg),
+    Ty { ty: HirTy },
+    Const { c: ConstArg },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

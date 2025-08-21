@@ -201,12 +201,14 @@ impl<'hir> FromHir<'hir, hir::def::Res> for Res {
                 forbid_generic: forbid_generic,
                 is_trait_impl: is_trait_impl,
             },
-            rustc_hir::def::Res::SelfCtor(def_id) => Self::SelfCtor((&def_id).into()),
+            rustc_hir::def::Res::SelfCtor(def_id) => Self::SelfCtor {
+                def_id: (&def_id).into(),
+            },
             rustc_hir::def::Res::Local(id) => Self::Local { id: id.into() },
             rustc_hir::def::Res::ToolMod => Self::ToolMod,
-            rustc_hir::def::Res::NonMacroAttr(non_macro_attr_kind) => {
-                Self::NonMacroAttr((&non_macro_attr_kind).into())
-            }
+            rustc_hir::def::Res::NonMacroAttr(non_macro_attr_kind) => Self::NonMacroAttr {
+                kind: (&non_macro_attr_kind).into(),
+            },
             rustc_hir::def::Res::Err => Self::Err,
         }
     }
@@ -356,10 +358,15 @@ impl<'hir> FromHir<'hir, &'hir hir::VariantData<'hir>> for VariantData {
                 fields: (*fields).hir_into(tcx),
                 recovered: matches!(recovered, rustc_ast::Recovered::Yes(_)),
             },
-            hir::VariantData::Tuple(fs, hir_id, lid) => {
-                Self::Tuple((*fs).hir_into(tcx), hir_id.into(), (*lid).into())
-            }
-            hir::VariantData::Unit(hir_id, lid) => Self::Unit(hir_id.into(), (*lid).into()),
+            hir::VariantData::Tuple(fs, hir_id, lid) => Self::Tuple {
+                def: (*fs).hir_into(tcx),
+                hir_id: hir_id.into(),
+                local_def_id: (*lid).into(),
+            },
+            hir::VariantData::Unit(hir_id, lid) => Self::Unit {
+                hir_id: hir_id.into(),
+                local_def_id: (*lid).into(),
+            },
         }
     }
 }
@@ -415,7 +422,7 @@ impl<'hir> FromHir<'hir, &'hir hir::Impl<'hir>> for Impl {
 impl From<hir::ImplPolarity> for ImplPolarity {
     fn from(value: hir::ImplPolarity) -> Self {
         match value {
-            hir::ImplPolarity::Negative(sp) => Self::Negative(sp.into()),
+            hir::ImplPolarity::Negative(sp) => Self::Negative { span: sp.into() },
             _ => Self::Positive,
         }
     }
@@ -455,9 +462,15 @@ impl<'hir> FromHir<'hir, &'hir hir::WherePredicate<'hir>> for WherePredicate {
 impl<'hir> FromHir<'hir, &'hir hir::WherePredicateKind<'hir>> for WherePredicateKind {
     fn from_hir(value: &'hir hir::WherePredicateKind<'hir>, tcx: TyCtxt<'hir>) -> Self {
         match value {
-            hir::WherePredicateKind::BoundPredicate(b) => Self::Bound(b.hir_into(tcx)),
-            hir::WherePredicateKind::RegionPredicate(r) => Self::Region(r.hir_into(tcx)),
-            hir::WherePredicateKind::EqPredicate(e) => Self::Eq(e.hir_into(tcx)),
+            hir::WherePredicateKind::BoundPredicate(b) => Self::Bound {
+                pred: b.hir_into(tcx),
+            },
+            hir::WherePredicateKind::RegionPredicate(r) => Self::Region {
+                pred: r.hir_into(tcx),
+            },
+            hir::WherePredicateKind::EqPredicate(e) => Self::Eq {
+                pred: e.hir_into(tcx),
+            },
         }
     }
 }
@@ -549,7 +562,9 @@ where
 impl From<&hir::UseKind> for UseKind {
     fn from(value: &hir::UseKind) -> Self {
         match value {
-            hir::UseKind::Single(ident) => UseKind::Single((*ident).into()),
+            hir::UseKind::Single(ident) => UseKind::Single {
+                ident: (*ident).into(),
+            },
             hir::UseKind::Glob => UseKind::Glob,
             hir::UseKind::ListStem => UseKind::ListStem,
         }
@@ -611,10 +626,10 @@ impl From<hir::def::Res> for Res {
                 forbid_generic: *forbid_generic,
                 is_trait_impl: *is_trait_impl,
             },
-            hir::def::Res::SelfCtor(id) => Self::SelfCtor(id.into()),
+            hir::def::Res::SelfCtor(id) => Self::SelfCtor { def_id: id.into() },
             hir::def::Res::Local(id) => Self::Local { id: id.into() },
             hir::def::Res::ToolMod => Self::ToolMod,
-            hir::def::Res::NonMacroAttr(kind) => Self::NonMacroAttr(kind.into()),
+            hir::def::Res::NonMacroAttr(kind) => Self::NonMacroAttr { kind: kind.into() },
             hir::def::Res::Err => Self::Err,
         }
     }
@@ -634,10 +649,16 @@ impl<'hir> FromHir<'hir, &'hir hir::GenericArgs<'hir>> for GenericArgs {
 impl<'hir> FromHir<'hir, &'hir hir::GenericArg<'hir>> for GenericArg {
     fn from_hir(value: &'hir hir::GenericArg<'hir>, tcx: TyCtxt<'hir>) -> Self {
         match value {
-            hir::GenericArg::Lifetime(l) => Self::Lifetime((*l).into()),
-            hir::GenericArg::Type(ty) => Self::Type((*ty).hir_into(tcx)),
-            hir::GenericArg::Const(c) => Self::Const((*c).hir_into(tcx)),
-            hir::GenericArg::Infer(i) => Self::Infer(i.into()),
+            hir::GenericArg::Lifetime(l) => Self::Lifetime {
+                lifetime: (*l).into(),
+            },
+            hir::GenericArg::Type(ty) => Self::Type {
+                ty: (*ty).hir_into(tcx),
+            },
+            hir::GenericArg::Const(c) => Self::Const {
+                c: (*c).hir_into(tcx),
+            },
+            hir::GenericArg::Infer(i) => Self::Infer { infer: i.into() },
         }
     }
 }
@@ -670,8 +691,12 @@ impl<'hir> FromHir<'hir, &'hir hir::AssocItemConstraintKind<'hir>> for AssocItem
 impl<'hir> FromHir<'hir, &'hir hir::Term<'hir>> for Term {
     fn from_hir(value: &'hir hir::Term<'hir>, tcx: TyCtxt<'hir>) -> Self {
         match value {
-            hir::Term::Ty(ty) => Self::Ty((*ty).hir_into(tcx)),
-            hir::Term::Const(c) => Self::Const((*c).hir_into(tcx)),
+            hir::Term::Ty(ty) => Self::Ty {
+                ty: (*ty).hir_into(tcx),
+            },
+            hir::Term::Const(c) => Self::Const {
+                c: (*c).hir_into(tcx),
+            },
         }
     }
 }
@@ -679,9 +704,16 @@ impl<'hir> FromHir<'hir, &'hir hir::Term<'hir>> for Term {
 impl<'hir> FromHir<'hir, &'hir hir::GenericBound<'hir>> for GenericBound {
     fn from_hir(value: &'hir hir::GenericBound<'hir>, tcx: TyCtxt<'hir>) -> Self {
         match value {
-            hir::GenericBound::Trait(r) => GenericBound::Trait(r.hir_into(tcx)),
-            hir::GenericBound::Outlives(l) => GenericBound::Outlives((*l).into()),
-            hir::GenericBound::Use(args, sp) => Self::Use((*args).hir_into(tcx), (*sp).into()),
+            hir::GenericBound::Trait(r) => GenericBound::Trait {
+                trait_ref: r.hir_into(tcx),
+            },
+            hir::GenericBound::Outlives(l) => GenericBound::Outlives {
+                lifetime: (*l).into(),
+            },
+            hir::GenericBound::Use(args, sp) => Self::Use {
+                args: (*args).hir_into(tcx),
+                span: (*sp).into(),
+            },
         }
     }
 }
@@ -689,8 +721,12 @@ impl<'hir> FromHir<'hir, &'hir hir::GenericBound<'hir>> for GenericBound {
 impl<'hir> FromHir<'hir, &'hir hir::PreciseCapturingArg<'hir>> for PreciseCapturingArg {
     fn from_hir(value: &'hir hir::PreciseCapturingArg<'hir>, tcx: TyCtxt<'hir>) -> Self {
         match value {
-            hir::PreciseCapturingArg::Lifetime(l) => Self::Lifetime((*l).into()),
-            hir::PreciseCapturingArg::Param(a) => Self::Param(a.hir_into(tcx)),
+            hir::PreciseCapturingArg::Lifetime(l) => Self::Lifetime {
+                lifetime: (*l).into(),
+            },
+            hir::PreciseCapturingArg::Param(a) => Self::Param {
+                arg: a.hir_into(tcx),
+            },
         }
     }
 }
@@ -744,7 +780,9 @@ impl<'hir> FromHir<'hir, &'hir hir::GenericParam<'hir>> for GenericParam {
 impl From<hir::ParamName> for ParamName {
     fn from(value: hir::ParamName) -> Self {
         match value {
-            hir::ParamName::Plain(ident) => Self::Plain(ident.into()),
+            hir::ParamName::Plain(ident) => Self::Plain {
+                ident: ident.into(),
+            },
             hir::ParamName::Fresh => Self::Fresh,
             hir::ParamName::Error(..) => Self::Error,
         }
@@ -1118,12 +1156,13 @@ impl<'tcx> FromHir<'tcx, &'tcx hir::TyPat<'tcx>> for TyPat {
 impl<'tcx> FromHir<'tcx, hir::TyPatKind<'tcx>> for TyPatKind {
     fn from_hir(value: hir::TyPatKind<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
         match value {
-            rustc_hir::TyPatKind::Range(const_arg, const_arg1) => {
-                Self::Range(const_arg.hir_into(tcx), const_arg1.hir_into(tcx))
-            }
-            rustc_hir::TyPatKind::Or(ty_pats) => {
-                Self::Or(ty_pats.iter().map(|p| p.hir_into(tcx)).collect())
-            }
+            rustc_hir::TyPatKind::Range(const_arg, const_arg1) => Self::Range {
+                start: const_arg.hir_into(tcx),
+                end: const_arg1.hir_into(tcx),
+            },
+            rustc_hir::TyPatKind::Or(ty_pats) => Self::Or {
+                pats: ty_pats.iter().map(|p| p.hir_into(tcx)).collect(),
+            },
             rustc_hir::TyPatKind::Err(_) => Self::Err,
         }
     }
@@ -1133,7 +1172,7 @@ impl From<&hir::InferDelegationKind> for InferDelegationKind {
     fn from(value: &hir::InferDelegationKind) -> Self {
         match value {
             hir::InferDelegationKind::Output => Self::Output,
-            hir::InferDelegationKind::Input(n) => Self::Input(*n),
+            hir::InferDelegationKind::Input(n) => Self::Input { id: *n },
         }
     }
 }
@@ -1195,10 +1234,10 @@ impl<'hir> FromHir<'hir, &'hir hir::def::Res> for Res {
                 forbid_generic: *forbid_generic,
                 is_trait_impl: *is_trait_impl,
             },
-            hir::def::Res::SelfCtor(id) => Self::SelfCtor(id.into()),
+            hir::def::Res::SelfCtor(id) => Self::SelfCtor { def_id: id.into() },
             hir::def::Res::Local(id) => Self::Local { id: id.into() },
             hir::def::Res::ToolMod => Self::ToolMod,
-            hir::def::Res::NonMacroAttr(kind) => Self::NonMacroAttr(kind.into()),
+            hir::def::Res::NonMacroAttr(kind) => Self::NonMacroAttr { kind: kind.into() },
             hir::def::Res::Err => Self::Err,
         }
     }
@@ -1371,7 +1410,7 @@ impl From<&rustc_span::def_id::CrateNum> for CrateNum {
 impl From<&hir::def::NonMacroAttrKind> for NonMacroAttrKind {
     fn from(value: &hir::def::NonMacroAttrKind) -> Self {
         match value {
-            hir::def::NonMacroAttrKind::Builtin(s) => Self::Builtin(s.into()),
+            hir::def::NonMacroAttrKind::Builtin(s) => Self::Builtin { symbol: s.into() },
             hir::def::NonMacroAttrKind::Tool => Self::Tool,
             hir::def::NonMacroAttrKind::DeriveHelper => Self::DeriveHelper,
             hir::def::NonMacroAttrKind::DeriveHelperCompat => Self::DeriveHelperCompat,
@@ -1799,7 +1838,7 @@ impl From<&rustc_ast::StrStyle> for StrStyle {
     fn from(value: &rustc_ast::StrStyle) -> Self {
         match value {
             rustc_ast::StrStyle::Cooked => Self::Cooked,
-            rustc_ast::StrStyle::Raw(c) => Self::Raw(*c),
+            rustc_ast::StrStyle::Raw(c) => Self::Raw { depth: *c },
         }
     }
 }
@@ -1817,7 +1856,7 @@ impl From<&rustc_ast::LitIntType> for LitIntType {
 impl From<&rustc_ast::LitFloatType> for LitFloatType {
     fn from(value: &rustc_ast::LitFloatType) -> Self {
         match value {
-            rustc_ast::LitFloatType::Suffixed(ty) => Self::Suffixed(ty.into()),
+            rustc_ast::LitFloatType::Suffixed(ty) => Self::Suffixed { ty: ty.into() },
             rustc_ast::LitFloatType::Unsuffixed => Self::Unsuffixed,
         }
     }
@@ -1863,7 +1902,7 @@ impl From<&hir::MatchSource> for MatchSource {
             hir::MatchSource::Normal => Self::Normal,
             hir::MatchSource::Postfix => Self::Postfix,
             hir::MatchSource::ForLoopDesugar => Self::ForLoopDesugar,
-            hir::MatchSource::TryDesugar(id) => Self::TryDesugar(id.into()),
+            hir::MatchSource::TryDesugar(id) => Self::TryDesugar { hir_id: id.into() },
             hir::MatchSource::AwaitDesugar => Self::AwaitDesugar,
             hir::MatchSource::FormatArgs => Self::FormatArgs,
         }
@@ -2166,7 +2205,7 @@ impl From<&hir::Lifetime> for Lifetime {
 impl From<hir::LifetimeKind> for LifetimeKind {
     fn from(value: hir::LifetimeKind) -> Self {
         match value {
-            hir::LifetimeKind::Param(ldid) => Self::Param(ldid.into()),
+            hir::LifetimeKind::Param(ldid) => Self::Param { id: ldid.into() },
             hir::LifetimeKind::ImplicitObjectLifetimeDefault => Self::ImplicitObjectLifetimeDefault,
             hir::LifetimeKind::Error => Self::Error,
             hir::LifetimeKind::Infer => Self::Infer,
@@ -2359,8 +2398,10 @@ impl From<&rustc_hir::def::CtorKind> for CtorKind {
 impl From<rustc_middle::ty::VariantDiscr> for VariantDiscr {
     fn from(value: rustc_middle::ty::VariantDiscr) -> Self {
         match value {
-            rustc_middle::ty::VariantDiscr::Explicit(def_id) => Self::Explicit((&def_id).into()),
-            rustc_middle::ty::VariantDiscr::Relative(i) => Self::Relative(i),
+            rustc_middle::ty::VariantDiscr::Explicit(def_id) => Self::Explicit {
+                def_id: (&def_id).into(),
+            },
+            rustc_middle::ty::VariantDiscr::Relative(i) => Self::Relative { idx: i },
         }
     }
 }
@@ -2404,13 +2445,17 @@ impl<'tcx> From<&rustc_type_ir::FnHeader<TyCtxt<'tcx>>> for FnHeader {
 impl<'tcx> FromHir<'tcx, rustc_middle::ty::ExistentialPredicate<'tcx>> for ExistentialPredicate {
     fn from_hir(value: rustc_middle::ty::ExistentialPredicate<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
         match value {
-            rustc_type_ir::ExistentialPredicate::Trait(existential_trait_ref) => {
-                Self::Trait(existential_trait_ref.hir_into(tcx))
-            }
+            rustc_type_ir::ExistentialPredicate::Trait(existential_trait_ref) => Self::Trait {
+                pred: existential_trait_ref.hir_into(tcx),
+            },
             rustc_type_ir::ExistentialPredicate::Projection(existential_projection) => {
-                Self::Projection(existential_projection.hir_into(tcx))
+                Self::Projection {
+                    pred: existential_projection.hir_into(tcx),
+                }
             }
-            rustc_type_ir::ExistentialPredicate::AutoTrait(did) => Self::AutoTrait((&did).into()),
+            rustc_type_ir::ExistentialPredicate::AutoTrait(did) => Self::AutoTrait {
+                def_id: (&did).into(),
+            },
         }
     }
 }
@@ -2460,12 +2505,12 @@ where
 impl From<rustc_middle::ty::BoundVariableKind> for BoundVarKind {
     fn from(value: rustc_middle::ty::BoundVariableKind) -> Self {
         match value {
-            rustc_middle::ty::BoundVariableKind::Ty(bound_ty_kind) => {
-                Self::Ty(bound_ty_kind.into())
-            }
-            rustc_middle::ty::BoundVariableKind::Region(bound_region_kind) => {
-                Self::Region(bound_region_kind.into())
-            }
+            rustc_middle::ty::BoundVariableKind::Ty(bound_ty_kind) => Self::Ty {
+                ty: bound_ty_kind.into(),
+            },
+            rustc_middle::ty::BoundVariableKind::Region(bound_region_kind) => Self::Region {
+                region: bound_region_kind.into(),
+            },
             rustc_middle::ty::BoundVariableKind::Const => Self::Const,
         }
     }
@@ -2475,9 +2520,10 @@ impl From<rustc_middle::ty::BoundRegionKind> for BoundRegionKind {
     fn from(value: rustc_middle::ty::BoundRegionKind) -> Self {
         match value {
             rustc_middle::ty::BoundRegionKind::Anon => Self::Anon,
-            rustc_middle::ty::BoundRegionKind::Named(def_id, symbol) => {
-                Self::Named((&def_id).into(), symbol.into())
-            }
+            rustc_middle::ty::BoundRegionKind::Named(def_id, symbol) => Self::Named {
+                def_id: (&def_id).into(),
+                symbol: symbol.into(),
+            },
             rustc_middle::ty::BoundRegionKind::ClosureEnv => Self::ClosureEnv,
         }
     }
@@ -2520,9 +2566,10 @@ impl From<rustc_middle::ty::BoundTyKind> for BoundTyKind {
     fn from(value: rustc_middle::ty::BoundTyKind) -> Self {
         match value {
             rustc_middle::ty::BoundTyKind::Anon => Self::Anon,
-            rustc_middle::ty::BoundTyKind::Param(def_id, symbol) => {
-                Self::Param((&def_id).into(), symbol.into())
-            }
+            rustc_middle::ty::BoundTyKind::Param(def_id, symbol) => Self::Param {
+                def_id: (&def_id).into(),
+                symbol: symbol.into(),
+            },
         }
     }
 }
@@ -2600,8 +2647,12 @@ impl<'tcx> FromHir<'tcx, rustc_middle::ty::GenericArgKind<'tcx>> for GenericTyAr
     fn from_hir(value: rustc_middle::ty::GenericArgKind<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
         match value {
             rustc_type_ir::GenericArgKind::Lifetime(_) => Self::Lifetime,
-            rustc_type_ir::GenericArgKind::Type(ty) => Self::Type((&ty).hir_into(tcx)),
-            rustc_type_ir::GenericArgKind::Const(c) => Self::Const((&c).hir_into(tcx)),
+            rustc_type_ir::GenericArgKind::Type(ty) => Self::Type {
+                ty: (&ty).hir_into(tcx),
+            },
+            rustc_type_ir::GenericArgKind::Const(c) => Self::Const {
+                r#const: (&c).hir_into(tcx),
+            },
         }
     }
 }
@@ -2692,10 +2743,14 @@ impl<'tcx> FromHir<'tcx, &rustc_middle::ty::Expr<'tcx>> for ConstExpr {
 impl From<rustc_middle::ty::ExprKind> for ConstExprKind {
     fn from(value: rustc_middle::ty::ExprKind) -> Self {
         match value {
-            rustc_middle::ty::ExprKind::Binop(bin_op) => Self::Binop(bin_op.into()),
-            rustc_middle::ty::ExprKind::UnOp(un_op) => Self::UnOp(un_op.into()),
+            rustc_middle::ty::ExprKind::Binop(bin_op) => Self::Binop {
+                kind: bin_op.into(),
+            },
+            rustc_middle::ty::ExprKind::UnOp(un_op) => Self::UnOp { op: un_op.into() },
             rustc_middle::ty::ExprKind::FunctionCall => Self::FunctionCall,
-            rustc_middle::ty::ExprKind::Cast(cast_kind) => Self::Cast(cast_kind.into()),
+            rustc_middle::ty::ExprKind::Cast(cast_kind) => Self::Cast {
+                kind: cast_kind.into(),
+            },
         }
     }
 }
@@ -2756,8 +2811,12 @@ impl<'tcx> FromHir<'tcx, &rustc_middle::ty::GenericArg<'tcx>> for GenericTyArgKi
     fn from_hir(value: &rustc_middle::ty::GenericArg<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
         match value.unpack() {
             rustc_type_ir::GenericArgKind::Lifetime(_) => Self::Lifetime,
-            rustc_type_ir::GenericArgKind::Type(ty) => Self::Type((&ty).hir_into(tcx)),
-            rustc_type_ir::GenericArgKind::Const(c) => Self::Const((&c).hir_into(tcx)),
+            rustc_type_ir::GenericArgKind::Type(ty) => Self::Type {
+                ty: (&ty).hir_into(tcx),
+            },
+            rustc_type_ir::GenericArgKind::Const(c) => Self::Const {
+                r#const: (&c).hir_into(tcx),
+            },
         }
     }
 }
@@ -2801,9 +2860,10 @@ impl<'tcx> FromHir<'tcx, &rustc_middle::ty::BoundTyKind> for BoundTyKind {
     fn from_hir(value: &rustc_middle::ty::BoundTyKind, _: TyCtxt<'tcx>) -> Self {
         match value {
             rustc_middle::ty::BoundTyKind::Anon => Self::Anon,
-            rustc_middle::ty::BoundTyKind::Param(def_id, symbol) => {
-                Self::Param(def_id.into(), symbol.into())
-            }
+            rustc_middle::ty::BoundTyKind::Param(def_id, symbol) => Self::Param {
+                def_id: def_id.into(),
+                symbol: symbol.into(),
+            },
         }
     }
 }

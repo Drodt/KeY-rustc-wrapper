@@ -162,8 +162,15 @@ pub enum VariantData {
         fields: Vec<FieldDef>,
         recovered: bool,
     },
-    Tuple(Vec<FieldDef>, HirId, LocalDefId),
-    Unit(HirId, LocalDefId),
+    Tuple {
+        def: Vec<FieldDef>,
+        hir_id: HirId,
+        local_def_id: LocalDefId,
+    },
+    Unit {
+        hir_id: HirId,
+        local_def_id: LocalDefId,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -205,7 +212,7 @@ pub struct Impl {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum ImplPolarity {
     Positive,
-    Negative(Span),
+    Negative { span: Span },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -278,8 +285,8 @@ pub struct TyPat {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum TyPatKind {
-    Range(ConstArg, ConstArg),
-    Or(Vec<TyPat>),
+    Range { start: ConstArg, end: ConstArg },
+    Or { pats: Vec<TyPat> },
     Err,
 }
 
@@ -299,7 +306,7 @@ pub enum TraitObjectSyntax {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum InferDelegationKind {
-    Input(usize),
+    Input { id: usize },
     Output,
 }
 
@@ -346,7 +353,7 @@ pub type UsePath = Path<Vec<Res>>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum UseKind {
-    Single(Ident),
+    Single { ident: Ident },
     Glob,
     ListStem,
 }

@@ -135,8 +135,8 @@ pub enum CtorKind {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum VariantDiscr {
-    Explicit(DefId),
-    Relative(u32),
+    Explicit { def_id: DefId },
+    Relative { idx: u32 },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -177,9 +177,9 @@ pub struct ParamConst {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum InferConst {
-    Var(ConstVid),
-    EffectVar(EffectVid),
-    Fresh(u32),
+    Var { id: ConstVid },
+    EffectVar { id: EffectVid },
+    Fresh { idx: u32 },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -193,10 +193,10 @@ pub struct ConstExpr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum ConstExprKind {
-    Binop(BinOpKind),
-    UnOp(UnOp),
+    Binop { kind: BinOpKind },
+    UnOp { op: UnOp },
     FunctionCall,
-    Cast(CastKind),
+    Cast { kind: CastKind },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -244,21 +244,21 @@ pub struct Binder<T> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum BoundVarKind {
-    Ty(BoundTyKind),
-    Region(BoundRegionKind),
+    Ty { ty: BoundTyKind },
+    Region { region: BoundRegionKind },
     Const,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum BoundTyKind {
     Anon,
-    Param(DefId, Symbol),
+    Param { def_id: DefId, symbol: Symbol },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum BoundRegionKind {
     Anon,
-    Named(DefId, Symbol),
+    Named { def_id: DefId, symbol: Symbol },
     ClosureEnv,
 }
 
@@ -269,9 +269,9 @@ pub struct FnSigTys {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum ExistentialPredicate {
-    Trait(ExistentialTraitRef),
-    Projection(ExistentialProjection),
-    AutoTrait(DefId),
+    Trait { pred: ExistentialTraitRef },
+    Projection { pred: ExistentialProjection },
+    AutoTrait { def_id: DefId },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -316,8 +316,8 @@ pub struct AliasTy {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum GenericTyArgKind {
     Lifetime, //(Region)
-    Type(Ty),
-    Const(Const),
+    Type { ty: Ty },
+    Const { r#const: Const },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -346,12 +346,12 @@ pub struct UniverseIndex(pub u32);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum InferTy {
-    TyVar(TyVid),
-    IntVar(IntVid),
-    FloatVar(FloatVid),
-    FreshTy(u32),
-    FreshIntTy(u32),
-    FreshFloatTy(u32),
+    TyVar { id: TyVid },
+    IntVar { id: IntVid },
+    FloatVar { id: FloatVid },
+    FreshTy { id: u32 },
+    FreshIntTy { id: u32 },
+    FreshFloatTy { id: u32 },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
