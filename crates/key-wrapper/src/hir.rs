@@ -214,7 +214,10 @@ pub struct CrateNum(pub u32);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 /// the second field is true iff it is a function ctor
-pub struct Ctor(pub CtorOf, pub bool);
+pub struct Ctor {
+    pub of: CtorOf,
+    pub is_fn_ctor: bool,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "serde_tag")]

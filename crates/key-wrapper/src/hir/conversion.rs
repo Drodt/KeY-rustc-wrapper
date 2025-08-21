@@ -1297,10 +1297,16 @@ impl From<&hir::def::DefKind> for DefKind {
                 nested: *nested,
             },
             hir::def::DefKind::Ctor(of, hir::def::CtorKind::Fn) => Self::Ctor {
-                ctor: Ctor(of.into(), true),
+                ctor: Ctor {
+                    of: of.into(),
+                    is_fn_ctor: true,
+                },
             },
             hir::def::DefKind::Ctor(of, hir::def::CtorKind::Const) => Self::Ctor {
-                ctor: Ctor(of.into(), false),
+                ctor: Ctor {
+                    of: of.into(),
+                    is_fn_ctor: false,
+                },
             },
             hir::def::DefKind::AssocFn => Self::AssocFn,
             hir::def::DefKind::AssocConst => Self::AssocConst,
