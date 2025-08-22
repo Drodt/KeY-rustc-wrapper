@@ -12,18 +12,21 @@ use rml::util::{get_attr, is_spec};
 
 use Ctor;
 use Def;
-use type_extract::extract_types;
+use type_extract::extract_extra_info;
 
 use super::*;
 
 pub fn convert(tcx: TyCtxt<'_>) -> Crate {
     let m = tcx.hir_root_module();
     let top_mod = m.hir_into(tcx);
-    let types = extract_types(&top_mod, tcx)
-        .into_iter()
-        .map(Into::into)
-        .collect();
-    Crate { top_mod, types }
+    let (types, adts) = extract_extra_info(&top_mod, tcx);
+    let types = types.into_iter().map(Into::into).collect();
+    let adts = adts.into_iter().map(Into::into).collect();
+    Crate {
+        top_mod,
+        types,
+        adts,
+    }
 }
 
 pub struct ConversionCtxt<'tcx> {
@@ -2466,7 +2469,8 @@ fn convert_field_def<'tcx>(
     TyFieldDef {
         did: (&value.did).into(),
         name: value.name.into(),
-        ty: (&value.ty(tcx, args)).hir_into(tcx),
+        inst_ty: (&value.ty(tcx, args)).hir_into(tcx),
+        ty: (&tcx.type_of(value.did).instantiate_identity()).hir_into(tcx),
     }
 }
 

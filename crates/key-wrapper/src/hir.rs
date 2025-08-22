@@ -19,6 +19,7 @@ pub mod visit;
 pub struct Crate {
     pub top_mod: Mod,
     pub types: Vec<HirIdTypeMapping>,
+    pub adts: Vec<DefIdAdtMapping>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -27,11 +28,26 @@ pub struct HirIdTypeMapping {
     pub ty: Ty,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct DefIdAdtMapping {
+    pub def_id: DefId,
+    pub def: AdtDef,
+}
+
 impl From<(HirId, Ty)> for HirIdTypeMapping {
     fn from(value: (HirId, Ty)) -> Self {
         Self {
             hir_id: value.0,
             ty: value.1,
+        }
+    }
+}
+
+impl From<(DefId, AdtDef)> for DefIdAdtMapping {
+    fn from(value: (DefId, AdtDef)) -> Self {
+        Self {
+            def_id: value.0,
+            def: value.1,
         }
     }
 }
@@ -203,13 +219,13 @@ pub struct HirId {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Hash)]
 pub struct ItemLocalId(pub u32);
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Hash)]
 pub struct DefId {
     pub index: DefIndex,
     pub krate: CrateNum,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Hash)]
 pub struct CrateNum(pub u32);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -347,6 +363,7 @@ pub struct GenericArgs {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum GenericArg {
     Lifetime { lifetime: Lifetime },
     Type { ty: HirTy },

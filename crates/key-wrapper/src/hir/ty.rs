@@ -135,6 +135,7 @@ pub struct FieldIdx(pub u32);
 pub struct TyFieldDef {
     pub did: DefId,
     pub name: Symbol,
+    pub inst_ty: Ty,
     pub ty: Ty,
 }
 

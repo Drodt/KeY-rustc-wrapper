@@ -78,13 +78,7 @@ pub fn visit_item_kind<'a, V: Visit<'a> + ?Sized>(v: &mut V, x: &'a ItemKind) {
         ItemKind::Const { body, .. } => {
             v.visit_body(body);
         }
-        ItemKind::Fn {
-            ident: _,
-            sig: _,
-            generics: _,
-            body_id: _,
-            body,
-        } => {
+        ItemKind::Fn { body, .. } => {
             v.visit_body(body);
         }
         ItemKind::Mod { r#mod: m, .. } => v.visit_mod(m),
