@@ -439,6 +439,7 @@ pub enum GenericParamSource {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum ParamName {
     Plain { ident: Ident },
     Fresh,
@@ -446,6 +447,7 @@ pub enum ParamName {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum GenericParamKind {
     Lifetime {
         kind: LifetimeParamKind,
@@ -462,9 +464,10 @@ pub enum GenericParamKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum LifetimeParamKind {
     Explicit,
-    Elided(MissingLifetimeKind),
+    Elided { kind: MissingLifetimeKind },
     Error,
 }
 

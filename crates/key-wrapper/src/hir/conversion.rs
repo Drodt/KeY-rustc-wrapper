@@ -823,7 +823,7 @@ impl From<&hir::LifetimeParamKind> for LifetimeParamKind {
     fn from(value: &hir::LifetimeParamKind) -> Self {
         match value {
             hir::LifetimeParamKind::Explicit => Self::Explicit,
-            hir::LifetimeParamKind::Elided(kind) => Self::Elided(kind.into()),
+            hir::LifetimeParamKind::Elided(kind) => Self::Elided { kind: kind.into() },
             hir::LifetimeParamKind::Error => Self::Error,
         }
     }
