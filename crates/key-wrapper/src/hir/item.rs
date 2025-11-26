@@ -40,6 +40,7 @@ pub enum ItemKind {
         #[serde(skip)]
         body_id: rustc_hir::BodyId,
         body: Body,
+        ty_generics: Option<TyGenerics>,
     },
     //Macro(MacroDef, MacroKind),
     Mod {
