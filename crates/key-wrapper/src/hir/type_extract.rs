@@ -71,7 +71,7 @@ impl<'a, 'tcx> Visit<'a> for Collector<'tcx> {
                 owner: owner.clone(),
                 local_id: lid.into(),
             };
-            if !self.hir_ids.contains(&hir_id) {
+            if !self.hir_ids.remove(&hir_id) {
                 continue;
             }
             let ty: Ty = ty.hir_into(self.tcx);
@@ -97,5 +97,9 @@ impl<'a, 'tcx> Visit<'a> for Collector<'tcx> {
         }
 
         visit_pat(self, t);
+    }
+
+    fn visit_const_arg(&mut self, t: &'a super::ConstArg) {
+        self.hir_ids.insert(t.hir_id.clone());
     }
 }
