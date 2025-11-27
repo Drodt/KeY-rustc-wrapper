@@ -3,7 +3,11 @@ use std::collections::{HashMap, HashSet};
 use rustc_hir::BodyId;
 use rustc_middle::ty::TyCtxt;
 
-use crate::hir::{DefId, ty::AdtDef, visit::visit_anon_const};
+use crate::hir::{
+    DefId,
+    ty::AdtDef,
+    visit::{visit_anon_const, visit_const_arg},
+};
 
 use super::{
     HirId, ItemKind, Mod, OwnerId, Ty,
@@ -101,5 +105,6 @@ impl<'a, 'tcx> Visit<'a> for Collector<'tcx> {
 
     fn visit_const_arg(&mut self, t: &'a super::ConstArg) {
         self.hir_ids.insert(t.hir_id.clone());
+        visit_const_arg(self, t);
     }
 }
