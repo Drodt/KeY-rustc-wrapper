@@ -227,6 +227,7 @@ pub struct Arm {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum MatchSource {
     Normal,
     Postfix,
