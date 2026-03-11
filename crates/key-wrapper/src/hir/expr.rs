@@ -182,6 +182,7 @@ pub enum LitKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum StrStyle {
     Cooked,
     Raw { depth: u8 },
