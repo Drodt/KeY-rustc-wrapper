@@ -152,6 +152,7 @@ pub enum CtorKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum VariantDiscr {
     Explicit { def_id: DefId },
     Relative { idx: u32 },
@@ -194,6 +195,7 @@ pub struct ParamConst {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum InferConst {
     Var { id: ConstVid },
     EffectVar { id: EffectVid },
@@ -210,6 +212,7 @@ pub struct ConstExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum ConstExprKind {
     Binop { kind: BinOpKind },
     UnOp { op: UnOp },
@@ -249,6 +252,7 @@ pub struct ScalarInt {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum Pattern {
     Range { start: Const, end: Const },
     Or { pats: Vec<Pattern> },
@@ -261,6 +265,7 @@ pub struct Binder<T> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum BoundVarKind {
     Ty { ty: BoundTyKind },
     Region { region: BoundRegionKind },
@@ -268,12 +273,14 @@ pub enum BoundVarKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum BoundTyKind {
     Anon,
     Param { def_id: DefId, symbol: Symbol },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum BoundRegionKind {
     Anon,
     Named { def_id: DefId, symbol: Symbol },
@@ -286,6 +293,7 @@ pub struct FnSigTys {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum ExistentialPredicate {
     Trait { pred: ExistentialTraitRef },
     Projection { pred: ExistentialProjection },
@@ -306,6 +314,7 @@ pub struct ExistentialProjection {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum TyTerm {
     Ty { ty: Ty },
     Const { c: Const },
@@ -364,6 +373,7 @@ pub struct Placeholder<T> {
 pub struct UniverseIndex(pub u32);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "serde_tag")]
 pub enum InferTy {
     TyVar { id: TyVid },
     IntVar { id: IntVid },
